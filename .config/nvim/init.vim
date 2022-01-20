@@ -1,18 +1,18 @@
 set nocompatible            " disable compatibility to old-time vi
-set showmatch               " show matching 
+"set showmatch               " show matching 
 " set ignorecase              " case insensitive 
 set mouse=v                 " middle-click paste with 
 "set hlsearch                " highlight search 
 "set incsearch               " incremental search
 set tabstop=4               " number of columns occupied by a tab
-set softtabstop=4           " see multiple spaces as tabstops so <BS> does the right thing
+set softtabstop=0           " see multiple spaces as tabstops so <BS> does the right thing
 set expandtab               " converts tabs to white space
 set shiftwidth=4            " width for autoindents
 set autoindent              " indent a new line the same amount as the line just typed
 set number                  " add line numbers
 set relativenumber          " add relative numbers
-"set wildmode=longest,list   " get bash-like tab completions
-" set cc=80                   " set an 80 column border for good coding style
+"set wildmode=longest,list  " get bash-like tab completions
+" set cc=80                 " set an 80 column border for good coding style
 filetype plugin indent on   " allow auto-indenting depending on file type
 syntax on                   " syntax highlighting
 set mouse=a                 " enable mouse click
@@ -20,6 +20,17 @@ set clipboard=unnamedplus   " using system clipboard
 filetype plugin on
 " set cursorline            " highlight current cursorline
 set ttyfast                 " Speed up scrolling in Vim
+
+" move to previous line when pressing left key
+set whichwrap+=<,h
+set whichwrap+=>,l
+set whichwrap+=[,]
+
+" clear search highlight
+nnoremap <esc> :noh<return><esc>
+
+" Indentation per file types
+autocmd Filetype html setlocal ts=2 sw=2 expandtab
 
 call plug#begin('~/.config/nvim/plugged')
 
@@ -36,7 +47,7 @@ Plug 'neovim/nvim-lspconfig'
 " Extentions to built-in LSP, for example, providing type inlay hints
 Plug 'nvim-lua/lsp_extensions.nvim'
 " Nice UI for LSP
-Plug 'glepnir/lspsaga.nvim'
+"Plug 'glepnir/lspsaga.nvim'
 
 " parser
 Plug 'nvim-treesitter/nvim-treesitter', { 'do': ':TSUpdate' }
@@ -50,8 +61,13 @@ Plug 'hrsh7th/nvim-cmp'
 Plug 'hrsh7th/cmp-vsnip'
 Plug 'hrsh7th/vim-vsnip'
 
+" vscode-like pictograms cmp
+Plug 'onsails/lspkind-nvim'
+
 " automatically close brackets etc.
 Plug 'windwp/nvim-autopairs'
+" automatically close html tags
+"Plug 'alvan/vim-closetag'
 
 " fuzzy finder
 Plug 'nvim-lua/popup.nvim'
@@ -62,8 +78,8 @@ Plug 'nvim-telescope/telescope.nvim'
 " To enable more of the features of rust-analyzer, such as inlay hints and more!
 "Plug 'simrat39/rust-tools.nvim'
 
-" [typescript]
-Plug 'glepnir/lspsaga.nvim'
+" [html, css, javascript, typescript]
+Plug 'turbio/bracey.vim' "live preview
 
 " themes
 Plug 'tomasr/molokai'
@@ -75,21 +91,26 @@ call plug#end()
 
 " select theme
 colorscheme solarized
+set background=dark
+
+" true colors
+if (has("nvim"))
+  "For Neovim 0.1.3 and 0.1.4 < https://github.com/neovim/neovim/pull/2198 >
+  let $NVIM_TUI_ENABLE_TRUE_COLOR=1
+endif
+
+"For Neovim > 0.1.5 and Vim > patch 7.4.1799 < https://github.com/vim/vim/commit/61be73bb0f965a895bfb064ea3e55476ac175162 >
+"Based on Vim patch 7.4.1770 (`guicolors` option) < https://github.com/vim/vim/commit/8a633e3427b47286869aa4b96f2bfc1fe65b25cd >
+" < https://github.com/neovim/neovim/wiki/Following-HEAD#20160511 >
+if (has("termguicolors"))
+  set termguicolors
+endif
 
 " ---
 set completeopt=menuone,noinsert,noselect
 
-" lspsaga
-lua << EOF
-local saga = require 'lspsaga'
-saga.init_lsp_saga()
-EOF
-
-" lspsaga keybindings
-nnoremap <silent>K :Lspsaga hover_doc<CR>
-inoremap <silent> <C-k> <Cmd>Lspsaga signature_help<CR>
-nnoremap <silent> gh <Cmd>Lspsaga lsp_finder<CR>
-
+" bracey config
+let g:bracey_refresh_on_save = 1
 
 " autopairs
 lua << EOF
@@ -130,7 +151,7 @@ require('lualine').setup {
     lualine_z = {}
   },
   tabline = {},
-  extensions = {}
+  extensions = {'fugitive'}
 }
 EOF
 
@@ -148,6 +169,22 @@ EOF
 " [go]
 lua <<EOF
 require'lspconfig'.gopls.setup{}
+EOF
+
+" [html]
+lua <<EOF
+--Enable (broadcasting) snippet capability for completion
+local capabilities = vim.lsp.protocol.make_client_capabilities()
+capabilities.textDocument.completion.completionItem.snippetSupport = true
+
+require'lspconfig'.html.setup {
+  capabilities = capabilities,
+}
+EOF
+
+" emmet_ls
+lua << EOF
+require'lspconfig'.emmet_ls.setup{}
 EOF
 
 " [javascript/typescript]
@@ -218,14 +255,6 @@ nvim_lsp.rust_analyzer.setup({
     }
 })
 
--- Enable diagnostics
-vim.lsp.handlers["textDocument/publishDiagnostics"] = vim.lsp.with(
-  vim.lsp.diagnostic.on_publish_diagnostics, {
-    virtual_text = true,
-    signs = true,
-    update_in_insert = true,
-  }
-)
 EOF
 
 " Code navigation shortcuts
@@ -265,7 +294,7 @@ cmp.setup({
     ['<C-e>'] = cmp.mapping.close(),
     ['<CR>'] = cmp.mapping.confirm({
       behavior = cmp.ConfirmBehavior.Insert,
-      select = true,
+      select = false,
     })
   },
 
@@ -279,15 +308,86 @@ cmp.setup({
 })
 EOF
 
+" lspkind 
+lua <<EOF
+local lspkind = require('lspkind')
+local cmp =  require('cmp')
+cmp.setup {
+  formatting = {
+    format = lspkind.cmp_format({
+      with_text = false, -- do not show text alongside icons
+      maxwidth = 50, -- prevent the popup from showing more than provided characters (e.g 50 will not show more than 50 characters)
+
+      -- The function below will be called before any actual modifications from lspkind
+      -- so that you can provide more controls on popup customization. (See [#30](https://github.com/onsails/lspkind-nvim/pull/30))
+      before = function (entry, vim_item)
+        return vim_item
+      end
+    })
+  }
+}
+EOF
+
+" format on save
+lua <<EOF
+local on_attach = function(client, bufnr)
+    vim.api.nvim_command [[augroup Format]]
+    vim.api.nvim_command [[autocmd! * <buffer>]]
+    vim.api.nvim_command [[autocmd BufWritePre <buffer> lua vim.lsp.buf.formatting_seq_sync()]]
+    vim.api.nvim_command [[augroup END]]
+end
+EOF
+
+" tabline
+function MyTabLine()
+  let s = ''
+  for i in range(tabpagenr('$'))
+    " select the highlighting
+    if i + 1 == tabpagenr()
+      let s .= '%#TabLineSel#'
+    else
+      let s .= '%#TabLine#'
+    endif
+
+    " set the tab page number (for mouse clicks)
+    let s .= '%' . (i + 1) . 'T'
+
+    " the label is made by MyTabLabel()
+    let s .= ' %{MyTabLabel(' . (i + 1) . ')} '
+
+    if i + 1 == tabpagenr()
+      let s .= '%#TabLineSep#'
+    elseif i + 2 == tabpagenr()
+      let s .= '%#TabLineSep2#'
+    else
+      let s .= ''
+    endif
+  endfor
+
+  " after the last tab fill with TabLineFill and reset tab page nr
+  let s .= '%#TabLineFill#%T'
+
+  " right-align the label to close the current tab page
+  if tabpagenr('$') > 1
+    let s .= '%=%#TabLine#%999X'
+  endif
+
+  return s
+endfunction
+
+function MyTabLabel(n)
+  let buflist = tabpagebuflist(a:n)
+  let winnr = tabpagewinnr(a:n)
+  let name = bufname(buflist[winnr - 1])
+  let label = fnamemodify(name, ':t')
+  return len(label) == 0 ? '[No Name]' : label
+endfunction
+
+set tabline=%!MyTabLine()
+
 " have a fixed column for the diagnostics to appear in
 " this removes the jitter when warnings/errors flow in
 set signcolumn=yes
-
-" Set updatetime for CursorHold
-" 300ms of no cursor movement to trigger CursorHold
-set updatetime=300
-" Show diagnostic popup on cursor hover
-autocmd CursorHold * lua vim.diagnostic.open_float(nil, { focusable = false })
 
 " Goto previous/next diagnostic warning/error
 nnoremap <silent> g[ <cmd>lua vim.diagnostic.goto_prev()<CR>
