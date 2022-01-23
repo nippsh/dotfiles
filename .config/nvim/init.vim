@@ -1,18 +1,14 @@
 set nocompatible            " disable compatibility to old-time vi
-"set showmatch               " show matching 
-" set ignorecase              " case insensitive 
 set mouse=v                 " middle-click paste with 
-"set hlsearch                " highlight search 
-"set incsearch               " incremental search
-set tabstop=4               " number of columns occupied by a tab
+set tabstop=2               " number of columns occupied by a tab
 set softtabstop=0           " see multiple spaces as tabstops so <BS> does the right thing
 set expandtab               " converts tabs to white space
-set shiftwidth=4            " width for autoindents
+set shiftwidth=2            " width for autoindents
 set autoindent              " indent a new line the same amount as the line just typed
-set number                  " add line numbers
+set number                  " add line numbers and relative numbers (hybrid)
 set relativenumber          " add relative numbers
 "set wildmode=longest,list  " get bash-like tab completions
-" set cc=80                 " set an 80 column border for good coding style
+"set cc=80                   " set an 80 column border for good coding style
 filetype plugin indent on   " allow auto-indenting depending on file type
 syntax on                   " syntax highlighting
 set mouse=a                 " enable mouse click
@@ -20,17 +16,29 @@ set clipboard=unnamedplus   " using system clipboard
 filetype plugin on
 " set cursorline            " highlight current cursorline
 set ttyfast                 " Speed up scrolling in Vim
+set hidden
+set splitbelow
+set splitright
+
+set completeopt=menuone,noinsert,noselect
 
 " move to previous line when pressing left key
 set whichwrap+=<,h
 set whichwrap+=>,l
 set whichwrap+=[,]
 
+" toggle relative number on/off
+nnoremap <C-n> :windo set relativenumber!<CR>
+
+" visual mode indent with tab
+vnoremap <TAB> >gv
+vnoremap <S-TAB> <gv
+
 " clear search highlight
 nnoremap <esc> :noh<return><esc>
 
 " Indentation per file types
-autocmd Filetype html setlocal ts=2 sw=2 expandtab
+autocmd Filetype python setlocal tabstop=4 shiftwidth=4
 
 call plug#begin('~/.config/nvim/plugged')
 
@@ -47,7 +55,7 @@ Plug 'neovim/nvim-lspconfig'
 " Extentions to built-in LSP, for example, providing type inlay hints
 Plug 'nvim-lua/lsp_extensions.nvim'
 " Nice UI for LSP
-"Plug 'glepnir/lspsaga.nvim'
+" Plug 'weilbith/nvim-code-action-menu'
 
 " parser
 Plug 'nvim-treesitter/nvim-treesitter', { 'do': ':TSUpdate' }
@@ -64,6 +72,9 @@ Plug 'hrsh7th/vim-vsnip'
 " vscode-like pictograms cmp
 Plug 'onsails/lspkind-nvim'
 
+" tabline
+Plug 'romgrk/barbar.nvim'
+
 " automatically close brackets etc.
 Plug 'windwp/nvim-autopairs'
 " automatically close html tags
@@ -78,6 +89,9 @@ Plug 'nvim-telescope/telescope.nvim'
 " To enable more of the features of rust-analyzer, such as inlay hints and more!
 "Plug 'simrat39/rust-tools.nvim'
 
+" terminal
+Plug 'akinsho/toggleterm.nvim'
+
 " [html, css, javascript, typescript]
 Plug 'turbio/bracey.vim' "live preview
 
@@ -86,12 +100,13 @@ Plug 'tomasr/molokai'
 Plug 'shaunsingh/solarized.nvim'
 Plug 'shaunsingh/nord.nvim'
 Plug 'drewtempelmeyer/palenight.vim'
+Plug 'ful1e5/onedark.nvim'
 
 call plug#end()
 
 " select theme
-colorscheme solarized
-set background=dark
+colorscheme onedark
+" set background=dark
 
 " true colors
 if (has("nvim"))
@@ -99,15 +114,82 @@ if (has("nvim"))
   let $NVIM_TUI_ENABLE_TRUE_COLOR=1
 endif
 
-"For Neovim > 0.1.5 and Vim > patch 7.4.1799 < https://github.com/vim/vim/commit/61be73bb0f965a895bfb064ea3e55476ac175162 >
-"Based on Vim patch 7.4.1770 (`guicolors` option) < https://github.com/vim/vim/commit/8a633e3427b47286869aa4b96f2bfc1fe65b25cd >
-" < https://github.com/neovim/neovim/wiki/Following-HEAD#20160511 >
 if (has("termguicolors"))
   set termguicolors
 endif
 
-" ---
-set completeopt=menuone,noinsert,noselect
+" tabline
+" Move to previous/next
+nnoremap <silent>    <A-,> :BufferPrevious<CR>
+nnoremap <silent>    <A-.> :BufferNext<CR>
+" Re-order to previous/next
+nnoremap <silent>    <A-<> :BufferMovePrevious<CR>
+nnoremap <silent>    <A->> :BufferMoveNext<CR>
+" Goto buffer in position...
+nnoremap <silent>    <A-1> :BufferGoto 1<CR>
+nnoremap <silent>    <A-2> :BufferGoto 2<CR>
+nnoremap <silent>    <A-3> :BufferGoto 3<CR>
+nnoremap <silent>    <A-4> :BufferGoto 4<CR>
+nnoremap <silent>    <A-5> :BufferGoto 5<CR>
+nnoremap <silent>    <A-6> :BufferGoto 6<CR>
+nnoremap <silent>    <A-7> :BufferGoto 7<CR>
+nnoremap <silent>    <A-8> :BufferGoto 8<CR>
+nnoremap <silent>    <A-9> :BufferLast<CR>
+" Pin/unpin buffer
+nnoremap <silent>    <A-p> :BufferPin<CR>
+" Close buffer
+nnoremap <silent>    <A-c> :BufferClose<CR>
+" Magic buffer-picking mode
+nnoremap <silent> <C-s>    :BufferPick<CR>
+" Sort automatically by...
+"nnoremap <silent> <Space>bb :BufferOrderByBufferNumber<CR>
+"nnoremap <silent> <Space>bd :BufferOrderByDirectory<CR>
+"nnoremap <silent> <Space>bl :BufferOrderByLanguage<CR>
+"nnoremap <silent> <Space>bw :BufferOrderByWindowNumber<CR>
+
+let bufferline = get(g:, 'bufferline', {})
+let bufferline.auto_hide = v:true
+
+
+" terminal
+lua <<EOF
+require("toggleterm").setup{
+  size = 20,
+  open_mapping = [[<c-\>]],
+  hide_numbers = true,
+  shade_filetypes = {},
+  shade_terminals = true,
+  shading_factor = '2', -- the degree by which to darken to terminal colour, default: 1 for dark backgrounds, 3 for light
+  start_in_insert = true,
+  insert_mappings = true,
+  persist_size = true,
+  direction = 'float', -- 'vertical' | 'horizontal' | 'tab' | 'float'
+  close_on_exit = true, -- close the terminal window when the process exits
+  shell = vim.o.shell, -- change the default shell
+  -- This field is only relevant if direction is set to 'float'
+  float_opts = {
+    border = 'curved', 
+    winblend = 0,
+    highlights = {
+      border = "Normal",
+      background = "Normal",
+    }
+  }
+}
+
+function _G.set_terminal_keymaps()
+  local opts = {noremap = true}
+  vim.api.nvim_buf_set_keymap(0, 't', '<esc>', [[<C-\><C-n>]], opts)
+  vim.api.nvim_buf_set_keymap(0, 't', 'jk', [[<C-\><C-n>]], opts)
+  vim.api.nvim_buf_set_keymap(0, 't', '<C-h>', [[<C-\><C-n><C-W>h]], opts)
+  vim.api.nvim_buf_set_keymap(0, 't', '<C-j>', [[<C-\><C-n><C-W>j]], opts)
+  vim.api.nvim_buf_set_keymap(0, 't', '<C-k>', [[<C-\><C-n><C-W>k]], opts)
+  vim.api.nvim_buf_set_keymap(0, 't', '<C-l>', [[<C-\><C-n><C-W>l]], opts)
+end
+
+-- if you only want these mappings for toggle term use term://*toggleterm#* instead
+vim.cmd('autocmd! TermOpen term://* lua set_terminal_keymaps()')
+EOF
 
 " bracey config
 let g:bracey_refresh_on_save = 1
@@ -160,6 +242,24 @@ nnoremap <leader>ff <cmd>Telescope find_files<cr>
 nnoremap <leader>fg <cmd>Telescope live_grep<cr>
 nnoremap <leader>fb <cmd>Telescope buffers<cr>
 nnoremap <leader>fh <cmd>Telescope help_tags<cr>
+nnoremap <Leader>ca :lua require'telescope.builtin'.lsp_code_actions{layout_strategy='vertical', layout_config={height=0.5}}<cr>
+
+autocmd User TelescopePreviewerLoaded setlocal wrap
+
+lua <<EOF
+local actions = require("telescope.actions")
+
+require("telescope").setup({
+    defaults = {
+        mappings = {
+            i = {
+                ["<esc>"] = actions.close,
+                ["<C-A-x>"] = actions.select_vertical
+            },
+        },
+    },
+})
+EOF
 
 " [python]
 lua <<EOF
@@ -257,8 +357,7 @@ nvim_lsp.rust_analyzer.setup({
 
 EOF
 
-" Code navigation shortcuts
-" as found in :help lsp
+" LSP code navigation shortcuts
 nnoremap <silent> <c-]> <cmd>lua vim.lsp.buf.definition()<CR>
 nnoremap <silent> K     <cmd>lua vim.lsp.buf.hover()<CR>
 nnoremap <silent> gD    <cmd>lua vim.lsp.buf.implementation()<CR>
@@ -271,6 +370,9 @@ nnoremap <silent> gd    <cmd>lua vim.lsp.buf.definition()<CR>
 
 " Quick-fix
 nnoremap <silent> ga    <cmd>lua vim.lsp.buf.code_action()<CR>
+
+
+
 
 " Setup Completion
 " See https://github.com/hrsh7th/nvim-cmp#basic-configuration
@@ -338,57 +440,11 @@ local on_attach = function(client, bufnr)
 end
 EOF
 
-" tabline
-function MyTabLine()
-  let s = ''
-  for i in range(tabpagenr('$'))
-    " select the highlighting
-    if i + 1 == tabpagenr()
-      let s .= '%#TabLineSel#'
-    else
-      let s .= '%#TabLine#'
-    endif
-
-    " set the tab page number (for mouse clicks)
-    let s .= '%' . (i + 1) . 'T'
-
-    " the label is made by MyTabLabel()
-    let s .= ' %{MyTabLabel(' . (i + 1) . ')} '
-
-    if i + 1 == tabpagenr()
-      let s .= '%#TabLineSep#'
-    elseif i + 2 == tabpagenr()
-      let s .= '%#TabLineSep2#'
-    else
-      let s .= ''
-    endif
-  endfor
-
-  " after the last tab fill with TabLineFill and reset tab page nr
-  let s .= '%#TabLineFill#%T'
-
-  " right-align the label to close the current tab page
-  if tabpagenr('$') > 1
-    let s .= '%=%#TabLine#%999X'
-  endif
-
-  return s
-endfunction
-
-function MyTabLabel(n)
-  let buflist = tabpagebuflist(a:n)
-  let winnr = tabpagewinnr(a:n)
-  let name = bufname(buflist[winnr - 1])
-  let label = fnamemodify(name, ':t')
-  return len(label) == 0 ? '[No Name]' : label
-endfunction
-
-set tabline=%!MyTabLine()
-
-" have a fixed column for the diagnostics to appear in
+" have a fixed column for the 1s to appear in
 " this removes the jitter when warnings/errors flow in
 set signcolumn=yes
 
+" diagnostic
 " Goto previous/next diagnostic warning/error
 nnoremap <silent> g[ <cmd>lua vim.diagnostic.goto_prev()<CR>
 nnoremap <silent> g] <cmd>lua vim.diagnostic.goto_next()<CR>
