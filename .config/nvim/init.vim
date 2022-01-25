@@ -40,7 +40,7 @@ nnoremap <esc> :noh<return><esc>
 " Indentation per file types
 autocmd Filetype python setlocal tabstop=4 shiftwidth=4
 
-call plug#begin('~/.config/nvim/plugged')
+call plug#begin('$HOME/.config/nvim/plugged')
 
 " git & Github
 Plug 'tpope/vim-fugitive'
@@ -93,6 +93,7 @@ Plug 'nvim-telescope/telescope.nvim'
 Plug 'akinsho/toggleterm.nvim'
 
 " [html, css, javascript, typescript]
+Plug 'leafOfTree/vim-matchtag'
 Plug 'turbio/bracey.vim' "live preview
 
 " themes
@@ -147,10 +148,6 @@ nnoremap <silent> <C-s>    :BufferPick<CR>
 "nnoremap <silent> <Space>bl :BufferOrderByLanguage<CR>
 "nnoremap <silent> <Space>bw :BufferOrderByWindowNumber<CR>
 
-let bufferline = get(g:, 'bufferline', {})
-let bufferline.auto_hide = v:true
-
-
 " terminal
 lua <<EOF
 require("toggleterm").setup{
@@ -203,6 +200,68 @@ local cmp_autopairs = require('nvim-autopairs.completion.cmp')
 local cmp = require('cmp')
 cmp.event:on( 'confirm_done', cmp_autopairs.on_confirm_done({  map_char = { tex = '' } }))
 cmp_autopairs.lisp[#cmp_autopairs.lisp+1] = "racket"
+EOF
+
+" diagnosticls
+lua << EOF
+local nvim_lsp = require('lspconfig')
+nvim_lsp.diagnosticls.setup {
+  on_attach = on_attach,
+  filetypes = { 'javascript', 'javascriptreact', 'json', 'typescript', 'typescriptreact', 'css', 'less', 'scss', 'markdown', 'pandoc' },
+  init_options = {
+    linters = {
+      eslint = {
+        command = 'eslint_d',
+        rootPatterns = { '.git' },
+        debounce = 100,
+        args = { '--stdin', '--stdin-filename', '%filepath', '--format', 'json' },
+        sourceName = 'eslint_d',
+        parseJson = {
+          errorsRoot = '[0].messages',
+          line = 'line',
+          column = 'column',
+          endLine = 'endLine',
+          endColumn = 'endColumn',
+          message = '[eslint] ${message} [${ruleId}]',
+          security = 'severity'
+        },
+        securities = {
+          [2] = 'error',
+          [1] = 'warning'
+        }
+      },
+    },
+    filetypes = {
+      javascript = 'eslint',
+      javascriptreact = 'eslint',
+      typescript = 'eslint',
+      typescriptreact = 'eslint',
+    },
+    formatters = {
+      eslint_d = {
+        command = 'eslint_d',
+        args = { '--stdin', '--stdin-filename', '%filename', '--fix-to-stdout' },
+        rootPatterns = { '.git' },
+      },
+      prettier = {
+        command = 'prettier',
+        args = { '--stdin-filepath', '%filename' }
+      }
+    },
+    formatFiletypes = {
+      css = 'prettier',
+      javascript = 'eslint_d',
+      javascriptreact = 'eslint_d',
+      json = 'prettier',
+      scss = 'prettier',
+      less = 'prettier',
+      typescript = 'eslint_d',
+      typescriptreact = 'eslint_d',
+      json = 'prettier',
+      markdown = 'prettier',
+    }
+  }
+}
 EOF
 
 " lualine
@@ -286,6 +345,10 @@ EOF
 lua << EOF
 require'lspconfig'.emmet_ls.setup{}
 EOF
+
+" match tags
+let g:vim_matchtag_enable_by_default = 1
+let g:vim_matchtag_files = '*.html,*.xml,*.js,*.jsx,*.vue,*.svelte,*.jsp'
 
 " [javascript/typescript]
 lua <<EOF
@@ -371,9 +434,6 @@ nnoremap <silent> gd    <cmd>lua vim.lsp.buf.definition()<CR>
 " Quick-fix
 nnoremap <silent> ga    <cmd>lua vim.lsp.buf.code_action()<CR>
 
-
-
-
 " Setup Completion
 " See https://github.com/hrsh7th/nvim-cmp#basic-configuration
 lua <<EOF
@@ -428,16 +488,6 @@ cmp.setup {
     })
   }
 }
-EOF
-
-" format on save
-lua <<EOF
-local on_attach = function(client, bufnr)
-    vim.api.nvim_command [[augroup Format]]
-    vim.api.nvim_command [[autocmd! * <buffer>]]
-    vim.api.nvim_command [[autocmd BufWritePre <buffer> lua vim.lsp.buf.formatting_seq_sync()]]
-    vim.api.nvim_command [[augroup END]]
-end
 EOF
 
 " have a fixed column for the 1s to appear in
