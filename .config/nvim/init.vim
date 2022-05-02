@@ -1,31 +1,77 @@
-set nocompatible            " disable compatibility to old-time vi
-set mouse=v                 " middle-click paste with 
-set tabstop=2               " number of columns occupied by a tab
-set softtabstop=0           " see multiple spaces as tabstops so <BS> does the right thing
-set expandtab               " converts tabs to white space
-set shiftwidth=2            " width for autoindents
-set autoindent              " indent a new line the same amount as the line just typed
-set number                  " add line numbers and relative numbers (hybrid)
-set relativenumber          " add relative numbers
-"set wildmode=longest,list  " get bash-like tab completions
-"set cc=80                   " set an 80 column border for good coding style
-filetype plugin indent on   " allow auto-indenting depending on file type
-syntax on                   " syntax highlighting
-set mouse=a                 " enable mouse click
-set clipboard=unnamedplus   " using system clipboard
+"
+"       ███╗░░██╗██╗██████╗░██████╗░░░░░░██████╗██╗░░██╗
+"       ████╗░██║██║██╔══██╗██╔══██╗░░░░██╔════╝██║░░██║
+"       ██╔██╗██║██║██████╔╝██████╔╝░░░░╚█████╗░███████║
+"       ██║╚████║██║██╔═══╝░██╔═══╝░░░░░░╚═══██╗██╔══██║
+"       ██║░╚███║██║██║░░░░░██║░░░░░██╗░██████╔╝██║░░██║
+"       ╚═╝░░╚══╝╚═╝╚═╝░░░░░╚═╝░░░░░╚═╝░╚═════╝░╚═╝░░╚═╝
+"
+"  Personal nvim configuration of Nikolaos Papandreou <mail@nipp.sh>
+
+"--------------------------------------------------------------------------
+" General settings
+"--------------------------------------------------------------------------
+
+set nocompatible
+set mouse=v
+set tabstop=2
+set softtabstop=0
+set expandtab
+set shiftwidth=2
+set autoindent
+set number
+filetype plugin indent on
+syntax on
+set mouse=a
+set clipboard=unnamedplus
 filetype plugin on
-" set cursorline            " highlight current cursorline
-set ttyfast                 " Speed up scrolling in Vim
+set ttyfast
 set hidden
 set splitbelow
 set splitright
-
+set nowrap
+set list
+set listchars=tab:▸\ ,trail:·
+set title
+set signcolumn=yes:2
+set scrolloff=8
+set sidescrolloff=8
 set completeopt=menuone,noinsert,noselect
 
 " move to previous line when pressing left key
 set whichwrap+=<,h
 set whichwrap+=>,l
 set whichwrap+=[,]
+" true colors
+
+if (has("nvim"))
+  "For Neovim 0.1.3 and 0.1.4 < https://github.com/neovim/neovim/pull/2198 >
+  let $NVIM_TUI_ENABLE_TRUE_COLOR=1
+endif
+
+if (has("termguicolors"))
+  set termguicolors
+endif
+
+" Indentation per file types
+autocmd Filetype python setlocal tabstop=4 shiftwidth=4
+
+"--------------------------------------------------------------------------
+" Key maps
+"--------------------------------------------------------------------------
+nnoremap d "_d
+vnoremap d "_d
+nnoremap c "_c
+vnoremap c "_c
+
+" Reselect visual selection after indenting
+vnoremap < <gv
+vnoremap > >gv
+
+" Maintain the cursor position when yanking a visual selection
+" http://ddrscott.github.io/blog/2016/yank-without-jank/
+vnoremap y myy`y
+vnoremap Y myY`y
 
 " toggle relative number on/off
 nnoremap <C-n> :windo set relativenumber!<CR>
@@ -37,8 +83,17 @@ vnoremap <S-TAB> <gv
 " clear search highlight
 nnoremap <esc> :noh<return><esc>
 
-" Indentation per file types
-autocmd Filetype python setlocal tabstop=4 shiftwidth=4
+" Keep it centered
+nnoremap n nzzzv
+nnoremap N Nzzzv
+nnoremap J mzJ`z
+
+" Easy insertion of a trailing ; or , from insert mode
+imap ;; <Esc>A;<Esc>
+imap ,, <Esc>A,<Esc>
+"--------------------------------------------------------------------------
+" Plugins
+"--------------------------------------------------------------------------
 
 call plug#begin('$HOME/.config/nvim/plugged')
 
@@ -49,6 +104,10 @@ Plug 'tpope/vim-rhubarb'
 " statusline
 Plug 'hoob3rt/lualine.nvim'
 Plug 'kyazdani42/nvim-web-devicons'
+
+" automatically follow symlinks
+Plug 'moll/vim-bbye'
+Plug 'aymericbeaumet/vim-symlink'
 
 " collection of common LSP configurations for Nvim
 Plug 'neovim/nvim-lspconfig'
@@ -89,12 +148,18 @@ Plug 'nvim-telescope/telescope.nvim'
 " To enable more of the features of rust-analyzer, such as inlay hints and more!
 "Plug 'simrat39/rust-tools.nvim'
 
+" discord rich presence
+Plug 'andweeb/presence.nvim'
+
 " terminal
 Plug 'akinsho/toggleterm.nvim'
 
 " [html, css, javascript, typescript]
 Plug 'leafOfTree/vim-matchtag'
 Plug 'turbio/bracey.vim' "live preview
+Plug 'yuezk/vim-js'
+Plug 'maxmellon/vim-jsx-pretty'
+Plug 'HerringtonDarkholme/yats.vim'
 
 " themes
 Plug 'tomasr/molokai'
@@ -108,16 +173,6 @@ call plug#end()
 " select theme
 colorscheme onedark
 " set background=dark
-
-" true colors
-if (has("nvim"))
-  "For Neovim 0.1.3 and 0.1.4 < https://github.com/neovim/neovim/pull/2198 >
-  let $NVIM_TUI_ENABLE_TRUE_COLOR=1
-endif
-
-if (has("termguicolors"))
-  set termguicolors
-endif
 
 " tabline
 " Move to previous/next
@@ -341,6 +396,27 @@ require'lspconfig'.html.setup {
 }
 EOF
 
+" [css]
+lua <<EOF
+--Enable (broadcasting) snippet capability for completion
+local capabilities = vim.lsp.protocol.make_client_capabilities()
+capabilities.textDocument.completion.completionItem.snippetSupport = true
+
+require'lspconfig'.cssls.setup {
+  capabilities = capabilities,
+}
+EOF
+
+" [json]
+lua <<EOF
+local capabilities = vim.lsp.protocol.make_client_capabilities()
+capabilities.textDocument.completion.completionItem.snippetSupport = true
+
+require'lspconfig'.jsonls.setup {
+  capabilities = capabilities,
+}
+EOF
+
 " emmet_ls
 lua << EOF
 require'lspconfig'.emmet_ls.setup{}
@@ -489,10 +565,6 @@ cmp.setup {
   }
 }
 EOF
-
-" have a fixed column for the 1s to appear in
-" this removes the jitter when warnings/errors flow in
-set signcolumn=yes
 
 " diagnostic
 " Goto previous/next diagnostic warning/error
