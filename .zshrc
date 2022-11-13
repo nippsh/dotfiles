@@ -8,6 +8,9 @@ fi
 # If you come from bash you might have to change your $PATH.
 # export PATH=$HOME/bin:/usr/local/bin:$PATH
 
+# Python path
+export PATH=$PATH:/Users/niko/Library/Python/3.8/bin
+
 # golang
 export PATH=$PATH:/usr/local/go/bin
 
@@ -131,3 +134,7 @@ colormap () {
 
 # windows terminal wsl open current directory when splitting terminal
 PROMPT_COMMAND=${PROMPT_COMMAND:+"$PROMPT_COMMAND; "}'printf "\e]9;9;%s\e\\" "$(wslpath -w "$PWD")"'
+
+
+# Load Angular CLI autocompletion.
+source <(ng completion script)
