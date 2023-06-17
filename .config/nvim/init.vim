@@ -59,6 +59,9 @@ autocmd Filetype python setlocal tabstop=4 shiftwidth=4
 "--------------------------------------------------------------------------
 " Key maps
 "--------------------------------------------------------------------------
+
+let mapleader = " "
+
 nnoremap d "_d
 vnoremap d "_d
 nnoremap c "_c
@@ -430,8 +433,17 @@ lua <<EOF
 require'lspconfig'.tsserver.setup{}
 EOF
 
+" [angularls]
 lua <<EOF
-  -- …
+local project_library_path = "/path/to/project/lib"
+local cmd = {"ngserver", "--stdio", "--tsProbeLocations", project_library_path , "--ngProbeLocations", project_library_path}
+
+require'lspconfig'.angularls.setup{
+  cmd = cmd,
+  on_new_config = function(new_config,new_root_dir)
+    new_config.cmd = cmd
+  end,
+}
 
   function goimports(timeout_ms)
     local context = { only = { "source.organizeImports" } }
