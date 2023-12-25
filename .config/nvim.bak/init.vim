@@ -6,7 +6,7 @@
 "       ██║░╚███║██║██║░░░░░██║░░░░░██╗░██████╔╝██║░░██║
 "       ╚═╝░░╚══╝╚═╝╚═╝░░░░░╚═╝░░░░░╚═╝░╚═════╝░╚═╝░░╚═╝
 "
-"  Personal nvim configuration of Nikolaos Papandreou <mail@nipp.sh>
+"  Personal nvim configuration of Niko <niko@touchedthecode.com>
 
 "--------------------------------------------------------------------------
 " General settings

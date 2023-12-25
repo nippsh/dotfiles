@@ -97,7 +97,7 @@ export LS_COLORS='no=00:fi=00:di=34:ow=34;40:ln=35:pi=30;44:so=35;44:do=35;44:bd
 # Custom plugins may be added to $ZSH_CUSTOM/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=(git aliases rsync ufw docker docker-compose copypath command-not-found common-aliases pip pipenv sudo zsh-syntax-highlighting)
+plugins=(git aliases rsync ufw docker docker-compose copypath command-not-found common-aliases pip pipenv poetry sudo zsh-syntax-highlighting history-substring-search fzf rust zsh-autosuggestions)
 
 source $ZSH/oh-my-zsh.sh
 
@@ -238,6 +238,3 @@ alias cpd="cp -r"
 
 # Created by `pipx` on 2023-06-08 10:29:34
 export PATH="$PATH:/home/npapandreou/.local/bin"
-
-# pipx completions
-eval "$(register-python-argcomplete pipx)"
