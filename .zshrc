@@ -11,6 +11,9 @@ fi
 # Python path
 export PATH=$PATH:/Users/niko/Library/Python/3.8/bin
 
+# Python Poetry export
+export PATH="/Users/niko/.local/bin:$PATH"
+
 # golang
 export GOROOT=/usr/local/go
 export GOPATH=$HOME/go
