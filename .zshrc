@@ -26,8 +26,13 @@ alias zshr='source ~/.zshrc'
 
 function list_all() {
   emulate -L zsh
-  ls --color=auto
+  if [[ $PWD == $HOME ]]; then
+    ls --color=auto
+  else
+    ls -A -p --color=auto 
+  fi
 }
+
 if [[ ${chpwd_functions[(r)list_all]} != "list_all" ]];then
   chpwd_functions=(${chpwd_functions[@]} "list_all")
 fi
@@ -75,7 +80,7 @@ export LS_COLORS='no=00:fi=00:di=34:ow=34;40:ln=35:pi=30;44:so=35;44:do=35;44:bd
 
 # Uncomment the following line to display red dots whilst waiting for completion.
 # You can also set it to another string to have that shown instead of the default red dots.
-# e.g. COMPLETION_WAITING_DOTS="%F{yellow}waiting...%f"
+COMPLETION_WAITING_DOTS="%F{yellow}waiting...%f"
 # Caution: this setting can cause issues with multiline prompts in zsh < 5.7.1 (see #5765)
 # COMPLETION_WAITING_DOTS="true"
 
@@ -100,7 +105,7 @@ export LS_COLORS='no=00:fi=00:di=34:ow=34;40:ln=35:pi=30;44:so=35;44:do=35;44:bd
 # Custom plugins may be added to $ZSH_CUSTOM/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=(git aliases rsync ufw docker docker-compose copypath command-not-found common-aliases pip pipenv poetry sudo zsh-syntax-highlighting history-substring-search fzf rust zsh-autosuggestions)
+plugins=(git aliases rsync ufw docker docker-compose copypath command-not-found common-aliases tmux pip pipenv poetry sudo zsh-syntax-highlighting history-substring-search fzf rust zsh-autosuggestions)
 
 source $ZSH/oh-my-zsh.sh
 
@@ -134,47 +139,23 @@ colormap () {
   for i in {0..255}; do print -Pn "%K{$i}  %k%F{$i}${(l:3::0:)i}%f " ${${(M)$((i%6)):#3}:+$'\n'}; done
 }
 
-# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
-[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
-
+## FZF
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
-## FZF
+## tmux
+export ZSH_TMUX_AUTOSTART=true
+export ZSH_TMUX_DEFAULT_SESSION_NAME="main"
+export ZSH_TMUX_CONFIG="$HOME/.config/tmux/tmux.conf"
 
 # include hidden files
 export FZF_DEFAULT_COMMAND="rg --files --follow --no-ignore-vcs --hidden -g '!{**/node_modules/*,**/.git/*}'"
 
-
 # windows terminal wsl open current directory when splitting terminal
 PROMPT_COMMAND=${PROMPT_COMMAND:+"$PROMPT_COMMAND; "}'printf "\e]9;9;%s\e\\" "$(wslpath -w "$PWD")"'
-
-
-# Load Angular CLI autocompletion.
-#source <(ng completion script)
 
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
-
-# WINDOWS - WSL
-
-# # overload git when mounted to windows filesystem
-# mkdir -p ~/bin
-# cat >~/bin/git <<'GIT'
-# #!/usr/bin/env bash
-# set -e
-# if [[ $(pwd -P) =~ ^/mnt/./ ]]; then
-#     exec /mnt/c/Program\ Files/Git/cmd/git.exe "$@"
-# else
-#     exec /usr/bin/git "$@"
-# fi
-# GIT
-# chmod +x ~/bin/git
-
-# gitreload(){
-#   sudo install /bin/git /usr/local/bin
-# }
-
 
 ## ALIAS GIT
 
@@ -196,7 +177,6 @@ git_checkout_issue() {
     fi
   fi
 }
-
 
 alias gcoi=git_checkout_issue
 
@@ -239,5 +219,5 @@ alias cfr="find . -type f | wc -l" # include subdirectories (cfr = count files r
 alias rmd='rm -r'
 alias cpd="cp -r"
 
-# Created by `pipx` on 2023-06-08 10:29:34
-export PATH="$PATH:/home/npapandreou/.local/bin"
+# To customize prompt, run `p10k configure` or edit ~/.dotfiles/.p10k.zsh.
+[[ ! -f ~/.dotfiles/.p10k.zsh ]] || source ~/.dotfiles/.p10k.zsh

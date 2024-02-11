@@ -27,6 +27,7 @@ end, { desc = "Terminal (cwd)" })
 --- trigger code actions like in rider
 keymap.set({ "n", "v" }, "<C-Enter>", vim.lsp.buf.code_action, { desc = "Code Action" })
 
---- remap d and c to black hole register
+--- remap d, c, x to black hole register
 keymap.set({ "n", "v" }, "d", '"_d', opts)
 keymap.set({ "n", "v" }, "c", '"_c', opts)
+keymap.set({ "n", "v" }, "x", '"_x', opts)
